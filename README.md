@@ -2,6 +2,14 @@
 
 Thie repo is an implementation of "Scalability vs. Utility: Must We Sacriﬁce One for the Other in Shapley-enriched Data Workﬂows?"
 
+### Setup
+
+Use the following command to install the package:
+
+```
+python setup.py install
+```
+
 ### Overview
 
 We provide 13 datasets, 5 feature extractors, 5 applications, and 6 data valuation measures for a comprehensive evaluation. The choices supported are listed below. 

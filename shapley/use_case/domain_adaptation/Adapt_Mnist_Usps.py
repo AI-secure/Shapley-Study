@@ -1,4 +1,3 @@
-# Author: Jiacen Xu
 import tensorflow as tf
 import numpy as np
 import h5py
