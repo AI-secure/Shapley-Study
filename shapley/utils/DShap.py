@@ -12,6 +12,7 @@ import itertools
 import pickle as pkl
 import scipy
 from scipy.stats import spearmanr
+from shapley.measures import KNN_Shapley, TMC_Shapley, G_Shapley, LOO, KNN_LOO
 
 import torch
 import torch.nn.functional as F
@@ -33,7 +34,7 @@ def delete_rows_csr(mat, index):
 class DShap(object):
     
     def __init__(self, X, y, X_test, y_test, num_test, sources=None, directory="./", 
-                 problem='classification', model_family='logistic', metric='accuracy',
+                 problem='classification', model_family='logistic', metric='accuracy', measure=None,
                  seed=None, nodump=False, **kwargs):
         """
         Args:
@@ -184,53 +185,41 @@ class DShap(object):
 
         self.restart_model()
         self.model.fit(self.X, self.y)
-        if knn_run:
+        if self.measure == "KNN_Shapley":
             for K in range(10, 11):
                 self._knn_shap(K)
-            print('KNN values calculated!')
-        # self._influence_function()
-        # for K in range(10, 11):
-        #     self._loo_knn_shap(K)
-        # print('LOOKNN values calculated!')
-        # if loo_run:
-        #     try:
-        #         len(self.vals_loo)
-        #     except:
-        #         self.vals_loo = self._calculate_loo_vals(sources=self.sources)
-        #         if self.nodump == False:
-        #             self.save_results(overwrite=True)
-        #     print('LOO values calculated!')
-        # while tmc_run or g_run:
-        #     if g_run:
-        #         if error(self.mem_g) < err:
-        #             g_run = False
-        #         else:
-        #             self._g_shap(save_every, sources=self.sources)
-        #             self.vals_g = np.mean(self.mem_g, 0)
-        #     if tmc_run:
-        #         if error(self.mem_tmc) < err:
-        #             tmc_run = False
-        #         else:
-        #             self._tmc_shap(save_every, tolerance=tolerance, sources=self.sources)
-        #             self.vals_tmc = np.mean(self.mem_tmc, 0)
-        #     if self.directory is not None:
-        #         if self.nodump == False:
-        #             self.save_results()
-                     
-    
-            
-    def save_results(self, overwrite=False):
-        """Saves results computed so far."""
-        if self.directory is None:
-            return
-        loo_dir = os.path.join(self.directory, 'loo.pkl')
-        if not os.path.exists(loo_dir) or overwrite:
-            pkl.dump({'loo': self.vals_loo}, open(loo_dir, 'wb'))
-        tmc_dir = os.path.join(self.directory, 'tmc.pkl')
-        g_dir = os.path.join(self.directory, 'g.pkl')  
-        pkl.dump(self.vals_tmc, open(tmc_dir, 'wb'))
-        pkl.dump(self.vals_g, open(g_dir, 'wb'))  
 
+        elif self.measure == "KNN_LOO":
+            for K in range(10, 11):
+                self._loo_knn_shap(K)
+
+        elif self.measure == "LOO":
+            try:
+                len(self.vals_loo)
+            except:
+                self.vals_loo = self._calculate_loo_vals(sources=self.sources)
+        elif self.measure == "TMC_Shapley":
+            tmc_run = True
+            if error(self.mem_tmc) < err:
+                tmc_run = False
+            else:
+                self._tmc_shap(save_every, tolerance=tolerance, sources=self.sources)
+                self.vals_tmc = np.mean(self.mem_tmc, 0)
+
+        elif self.measure == "G_Shapley":
+            g_run = True
+            if self.model_family not in ['logistic', 'NN']:
+                print("Model unsatisfied for G-Shapley!")
+                g_run = False
+            if error(self.mem_g) < err:
+                g_run = False
+            else:
+                self._g_shap(save_every, sources=self.sources)
+                self.vals_g = np.mean(self.mem_g, 0)
+
+        else:
+            print("Unknown measure!")
+                     
     def _influence_function(self):
         N = self.X.shape[0]
         self.restart_model()
