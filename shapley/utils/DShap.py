@@ -186,18 +186,17 @@ class DShap(object):
         self.restart_model()
         self.model.fit(self.X, self.y)
         if self.measure == "KNN_Shapley":
-            for K in range(10, 11):
-                self._knn_shap(K)
+            return self._knn_shap(K=10)
 
         elif self.measure == "KNN_LOO":
-            for K in range(10, 11):
-                self._loo_knn_shap(K)
+            return self._loo_knn_shap(K=10)
 
         elif self.measure == "LOO":
             try:
                 len(self.vals_loo)
             except:
                 self.vals_loo = self._calculate_loo_vals(sources=self.sources)
+            return self.vals_loo
         elif self.measure == "TMC_Shapley":
             tmc_run = True
             if error(self.mem_tmc) < err:
@@ -205,6 +204,7 @@ class DShap(object):
             else:
                 self._tmc_shap(save_every, tolerance=tolerance, sources=self.sources)
                 self.vals_tmc = np.mean(self.mem_tmc, 0)
+            return self.vals_tmc
 
         elif self.measure == "G_Shapley":
             g_run = True
@@ -216,21 +216,10 @@ class DShap(object):
             else:
                 self._g_shap(save_every, sources=self.sources)
                 self.vals_g = np.mean(self.mem_g, 0)
+            return self.vals_g
 
         else:
             print("Unknown measure!")
-                     
-    def _influence_function(self):
-        N = self.X.shape[0]
-        self.restart_model()
-        self.model.fit(self.X, self.y)
-        if self.model_family == "ResNet":
-            resnet = self.model
-            resnet.fit(self.X_test, self.y_test)
-            gradient = torch.autograd.grad(self.y_test, self.X_test)
-            print(gradient.shape)
-            print(gradient)
-            return
 
 
     def _loo_knn_shap(self, K=5):
@@ -266,8 +255,7 @@ class DShap(object):
                     value[j] += s[j]  
             for i in range(N):
                 value[i] /= M
-            pkl.dump(value, open(os.path.join(self.directory, 'looknn_{}.pkl'.format(K)), 'wb'))   
-            return
+            return value
 
         if self.model_family == "NN":
             nn = self.model
@@ -293,9 +281,8 @@ class DShap(object):
                 for i in range(N):
                     value[j] += s[j]  
             for i in range(N):
-                value[i] /= M
-            pkl.dump(value, open(os.path.join(self.directory, 'looknn_{}.pkl'.format(K)), 'wb'))   
-            return
+                value[i] /= M  
+            return value
 
         value = np.zeros(N)
         for i in range(M):
@@ -324,7 +311,7 @@ class DShap(object):
 
         for i in range(N):
             value[i] /= M
-        pkl.dump(value, open(os.path.join(self.directory, 'looknn_{}.pkl'.format(K)), 'wb')) 
+        return value
     
     def _knn_shap(self, K=5):
         N = self.X.shape[0]
@@ -352,7 +339,7 @@ class DShap(object):
                 for j in range(N - 1):
                     s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
                     cur -= 1
-            pkl.dump(s, open(os.path.join(self.directory, 'knn_{}.pkl'.format(K)), 'wb'))  
+            return np.mean(s, axis=1)
 
         if self.model_family == "NN":
             nn = self.model
@@ -372,8 +359,7 @@ class DShap(object):
                 for j in range(N - 1):
                     s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
                     cur -= 1  
-            pkl.dump(s, open(os.path.join(self.directory, 'knn_{}.pkl'.format(K)), 'wb'))  
-            return
+            return np.mean(s, axis=1)
 
         value = np.zeros(N)
         s = np.zeros((N, M))
@@ -395,7 +381,7 @@ class DShap(object):
                 s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
                 cur -= 1 
 
-        pkl.dump(s, open(os.path.join(self.directory, 'knn_{}.pkl'.format(K)), 'wb')) 
+            return np.mean(s, axis=1)
         
     def _tmc_shap(self, iterations, tolerance=None, sources=None):
         """Runs TMC-Shapley algorithm.
