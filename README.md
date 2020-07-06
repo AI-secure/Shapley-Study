@@ -31,11 +31,11 @@ python -m shapley.embedding.extract_embeddings --extractor resnet18 --dataset mn
 
 **Step 2.** Use a certain extracted embedding along with a certain measure in a certain application, implemented in the form of 
 
-``
+```
 measure = ...
 app = ...
 app.run(measure)
-``
+```
 
 See shaley.sample for example and run the toy experiment using the command below:
 
