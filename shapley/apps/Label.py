@@ -15,7 +15,7 @@ class Label(App):
         self.flip = np.zeros(self.num_train)
         self.model_family = model_family
 
-    def run(measure):
+    def run(self, measure):
         for i in range(self.num_test // 10):
             j = np.random.randint(0, self.num_test)
             while self.flip[j] == 1:
@@ -30,3 +30,6 @@ class Label(App):
               model_family=self.model_family,
               measure=measure)
         self.result = dshap.run(save_every=10, err = 0.5)
+        print('done!')
+        print('result shown below:')
+        print(self.result)

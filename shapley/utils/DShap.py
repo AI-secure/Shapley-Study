@@ -12,7 +12,6 @@ import itertools
 import pickle as pkl
 import scipy
 from scipy.stats import spearmanr
-from shapley.measures import KNN_Shapley, TMC_Shapley, G_Shapley, LOO, KNN_LOO
 
 import torch
 import torch.nn.functional as F
@@ -79,7 +78,8 @@ class DShap(object):
         self.is_regression = is_regression or isinstance(self.y[0], np.float64)
         self.model = return_model(self.model_family, **kwargs)
         self.random_score = self.init_score(self.metric)
-            
+        self.measure = measure
+
     def _initialize_instance(self, X, y, X_test, y_test, num_test, sources=None):
         """Loads or creates data."""
         
@@ -185,41 +185,44 @@ class DShap(object):
 
         self.restart_model()
         self.model.fit(self.X, self.y)
-        if self.measure == "KNN_Shapley":
-            return self._knn_shap(K=10)
 
-        elif self.measure == "KNN_LOO":
-            return self._loo_knn_shap(K=10)
+        return self.measure.score(self.X, self.y, self.X_test, self.y_test, self.model_family, self.model)
 
-        elif self.measure == "LOO":
-            try:
-                len(self.vals_loo)
-            except:
-                self.vals_loo = self._calculate_loo_vals(sources=self.sources)
-            return self.vals_loo
-        elif self.measure == "TMC_Shapley":
-            tmc_run = True
-            if error(self.mem_tmc) < err:
-                tmc_run = False
-            else:
-                self._tmc_shap(save_every, tolerance=tolerance, sources=self.sources)
-                self.vals_tmc = np.mean(self.mem_tmc, 0)
-            return self.vals_tmc
+        # if self.measure == "KNN_Shapley":
+        #     return self._knn_shap(K=10)
 
-        elif self.measure == "G_Shapley":
-            g_run = True
-            if self.model_family not in ['logistic', 'NN']:
-                print("Model unsatisfied for G-Shapley!")
-                g_run = False
-            if error(self.mem_g) < err:
-                g_run = False
-            else:
-                self._g_shap(save_every, sources=self.sources)
-                self.vals_g = np.mean(self.mem_g, 0)
-            return self.vals_g
+        # elif self.measure == "KNN_LOO":
+        #     return self._loo_knn_shap(K=10)
 
-        else:
-            print("Unknown measure!")
+        # elif self.measure == "LOO":
+        #     try:
+        #         len(self.vals_loo)
+        #     except:
+        #         self.vals_loo = self._calculate_loo_vals(sources=self.sources)
+        #     return self.vals_loo
+        # elif self.measure == "TMC_Shapley":
+        #     tmc_run = True
+        #     if error(self.mem_tmc) < err:
+        #         tmc_run = False
+        #     else:
+        #         self._tmc_shap(save_every, tolerance=tolerance, sources=self.sources)
+        #         self.vals_tmc = np.mean(self.mem_tmc, 0)
+        #     return self.vals_tmc
+
+        # elif self.measure == "G_Shapley":
+        #     g_run = True
+        #     if self.model_family not in ['logistic', 'NN']:
+        #         print("Model unsatisfied for G-Shapley!")
+        #         g_run = False
+        #     if error(self.mem_g) < err:
+        #         g_run = False
+        #     else:
+        #         self._g_shap(save_every, sources=self.sources)
+        #         self.vals_g = np.mean(self.mem_g, 0)
+        #     return self.vals_g
+
+        # else:
+        #     print("Unknown measure!")
 
 
     def _loo_knn_shap(self, K=5):
@@ -312,119 +315,7 @@ class DShap(object):
         for i in range(N):
             value[i] /= M
         return value
-    
-    def _knn_shap(self, K=5):
-        N = self.X.shape[0]
-        M = self.X_test.shape[0]
 
-        if self.model_family == "ResNet":
-            resnet = self.model
-            X_out1 = resnet.layer1(F.relu(resnet.bn1(resnet.conv1(torch.from_numpy(self.X)))))
-            X_test_out1 = resnet.layer1(F.relu(resnet.bn1(resnet.conv1(torch.from_numpy(self.X_test))))) # 64, 32, 32
-            X_out2 = resnet.layer2(X_out1)
-            X_test_out2 = resnet.layer2(X_test_out1) # 64, 32, 32
-            X_out3 = resnet.layer3(X_out2)
-            X_test_out3 = resnet.layer3(X_test_out2) # 64, 32, 32
-            s = np.zeros((N, M))
-            for i in range(M):
-                X = X_test_out1[i]
-                y = self.y_test[i]
-                dist = []
-                diff = (X_out1.detach().numpy() - X.detach().numpy()).reshape(N, -1)
-                dist = np.einsum('ij, ij->i', diff, diff)
-                idx = np.argsort(dist)
-                ans = self.y[idx]
-                s[idx[N - 1]][i] = float(ans[N - 1] == y) / N
-                cur = N - 2
-                for j in range(N - 1):
-                    s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
-                    cur -= 1
-            return np.mean(s, axis=1)
-
-        if self.model_family == "NN":
-            nn = self.model
-            X_feature = ACTIVATIONS['relu'](np.matmul(self.X, nn.coefs_[0]) + nn.intercepts_[0])
-            X_test_feature = ACTIVATIONS['relu'](np.matmul(self.X_test, nn.coefs_[0]) + nn.intercepts_[0])
-            s = np.zeros((N, M))
-            for i in range(M):
-                X = X_test_feature[i]
-                y = self.y_test[i]
-                dist = []
-                diff = (X_feature - X).reshape(N, -1)
-                dist = np.einsum('ij, ij->i', diff, diff)
-                idx = np.argsort(dist)
-                ans = self.y[idx]
-                s[idx[N - 1]][i] = float(ans[N - 1] == y) / N
-                cur = N - 2
-                for j in range(N - 1):
-                    s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
-                    cur -= 1  
-            return np.mean(s, axis=1)
-
-        value = np.zeros(N)
-        s = np.zeros((N, M))
-        for i in range(M):
-            X = self.X_test[i]
-            y = self.y_test[i]
-
-            dist = []
-            diff = (self.X - X).reshape(N, -1)
-            dist = np.einsum('ij, ij->i', diff, diff)
-            idx = np.argsort(dist)
-
-            ans = self.y[idx]
-
-            s[idx[N - 1]][i] = float(ans[N - 1] == y) / N
-
-            cur = N - 2
-            for j in range(N - 1):
-                s[idx[cur]][i] = s[idx[cur + 1]][i] + float(int(ans[cur] == y) - int(ans[cur + 1] == y)) / K * (min(cur, K - 1) + 1) / (cur + 1)
-                cur -= 1 
-
-            return np.mean(s, axis=1)
-        
-    def _tmc_shap(self, iterations, tolerance=None, sources=None):
-        """Runs TMC-Shapley algorithm.
-        
-        Args:
-            iterations: Number of iterations to run.
-            tolerance: Truncation tolerance. (ratio with respect to average performance.)
-            sources: If values are for sources of data points rather than
-                   individual points. In the format of an assignment array
-                   or dict.
-        """
-        if sources is None:
-            sources = {i:np.array([i]) for i in range(self.X.shape[0])}
-        elif not isinstance(sources, dict):
-            sources = {i:np.where(sources==i)[0] for i in set(sources)}
-        model = self.model
-        try:
-            self.mean_score
-        except:
-            self._tol_mean_score()
-        if tolerance is None:
-            tolerance = self.tolerance         
-        marginals, idxs = [], []
-        for iteration in range(iterations):
-            if 10*(iteration+1)/iterations % 1 == 0:
-                print('{} out of {} TMC_Shapley iterations.'.format(iteration + 1, iterations))
-            marginals, idxs = self.one_iteration(tolerance=tolerance, sources=sources)
-            self.mem_tmc = np.concatenate([self.mem_tmc, np.reshape(marginals, (1,-1))])
-            self.idxs_tmc = np.concatenate([self.idxs_tmc, np.reshape(idxs, (1,-1))])
-        
-    def _tol_mean_score(self):
-        """Computes the average performance and its error using bagging."""
-        scores = []
-        self.restart_model()
-        for _ in range(1):
-            self.model.fit(self.X, self.y)
-            for _ in range(100):
-                bag_idxs = np.random.choice(len(self.y_test), len(self.y_test))
-                scores.append(self.value(self.model, metric=self.metric,
-                                         X=self.X_test[bag_idxs], y=self.y_test[bag_idxs]))
-        self.tol = np.std(scores)
-        self.mean_score = np.mean(scores)
-        
     def one_iteration(self, tolerance, sources=None):
         """Runs one iteration of TMC-Shapley algorithm."""
         if sources is None:
