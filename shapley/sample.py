@@ -66,10 +66,10 @@ for i in range(x):
 pickle.dump(flip, open('flip.pkl', 'wb'))
 
 # measure
-measure = KNN_Shapley(len(X_data), len(y_data))
+measure = KNN_Shapley(K=5)
 
 # application
-label = Label(X_data, y_data, X_test_data, y_test_data, model_family='NN')
+app = Label(X_data, y_data, X_test_data, y_test_data, model_family='NN')
 
 # run and get result
-label.run(measure)
+app.run(measure)

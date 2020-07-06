@@ -29,4 +29,16 @@ Measures        KNN-Shapley, TMC-Shapley, G-Shapley, LOO, KNN-LOO, Random
 python -m shapley.embedding.extract_embeddings --extractor resnet18 --dataset mnist
 ``
 
-**Step 2.** Use a certain extracted embedding along with a certain measure in a certain application, implemented in the form of ``run_experiment(embedding, measure, application)``.
+**Step 2.** Use a certain extracted embedding along with a certain measure in a certain application, implemented in the form of 
+
+``
+measure = ...
+app = ...
+app.run(measure)
+``
+
+See shaley.sample for example and run the toy experiment using the command below:
+
+``
+python -m shapley.sample --num 1000
+``
