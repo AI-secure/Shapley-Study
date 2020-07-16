@@ -1,12 +1,19 @@
+import numpy as np
+from sklearn.neural_network._base import ACTIVATIONS
+
+import torch
+import torch.nn.functional as F
+
 from shapley.measures import Measure
 
 class KNN_LOO(Measure):
 
-    def __init__(self, num_train=1000, num_test=100):
+    def __init__(self, K=10):
         self.name = 'KNN_LOO'
+        self.K = K
 
     def score(self, X_train, y_train, X_test, y_test, model_family='', model=None):
-        N = X.shape[0]
+        N = X_train.shape[0]
         M = X_test.shape[0]
 
         self.model = model
@@ -32,8 +39,8 @@ class KNN_LOO(Measure):
                 s[idx[N - 1]] = float(ans[N - 1] == y) / N
                 cur = N - 2
                 for j in range(N):
-                    if j in idx[:K]:
-                        s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
+                    if j in idx[:self.K]:
+                        s[j] = float(int(ans[j] == y) - int(ans[self.K] == y)) / self.K
                     else:
                         s[j] = 0
                 for i in range(N):
@@ -55,12 +62,12 @@ class KNN_LOO(Measure):
                 diff = (X_feature - X).reshape(N, -1)
                 dist = np.einsum('ij, ij->i', diff, diff)
                 idx = np.argsort(dist)
-                ans = y[idx]
+                ans = y_train[idx]
                 s[idx[N - 1]] = float(ans[N - 1] == y) / N
                 cur = N - 2
                 for j in range(N):
-                    if j in idx[:K]:
-                        s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
+                    if j in idx[:self.K]:
+                        s[j] = float(int(ans[j] == y) - int(ans[self.K] == y)) / self.K
                     else:
                         s[j] = 0
                 for i in range(N):
@@ -86,8 +93,8 @@ class KNN_LOO(Measure):
 
             cur = N - 2
             for j in range(N):
-                if j in idx[:K]:
-                    s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
+                if j in idx[:self.K]:
+                    s[j] = float(int(ans[j] == y) - int(ans[self.K] == y)) / self.K
                 else:
                     s[j] = 0
                 

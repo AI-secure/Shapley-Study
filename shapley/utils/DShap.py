@@ -188,13 +188,7 @@ class DShap(object):
 
         return self.measure.score(self.X, self.y, self.X_test, self.y_test, self.model_family, self.model)
 
-        # if self.measure == "KNN_Shapley":
-        #     return self._knn_shap(K=10)
-
-        # elif self.measure == "KNN_LOO":
-        #     return self._loo_knn_shap(K=10)
-
-        # elif self.measure == "LOO":
+        # if self.measure == "LOO":
         #     try:
         #         len(self.vals_loo)
         #     except:
@@ -224,97 +218,6 @@ class DShap(object):
         # else:
         #     print("Unknown measure!")
 
-
-    def _loo_knn_shap(self, K=5):
-        N = self.X.shape[0]
-        M = self.X_test.shape[0]
-
-        if self.model_family == "ResNet":
-            resnet = self.model
-            X_out1 = resnet.layer1(F.relu(resnet.bn1(resnet.conv1(torch.from_numpy(self.X)))))
-            X_test_out1 = resnet.layer1(F.relu(resnet.bn1(resnet.conv1(torch.from_numpy(self.X_test))))) # 64, 32, 32
-            X_out2 = resnet.layer2(X_out1)
-            X_test_out2 = resnet.layer2(X_test_out1) # 64, 32, 32
-            X_out3 = resnet.layer3(X_out2)
-            X_test_out3 = resnet.layer3(X_test_out2) # 64, 32, 32
-            value = np.zeros(N)
-            for i in range(M):
-                X = X_test_out1[i]
-                y = self.y_test[i]
-                s = np.zeros(N)
-                dist = []
-                diff = (X_out1.detach().numpy() - X.detach().numpy()).reshape(N, -1)
-                dist = np.einsum('ij, ij->i', diff, diff)
-                idx = np.argsort(dist)
-                ans = self.y[idx]
-                s[idx[N - 1]] = float(ans[N - 1] == y) / N
-                cur = N - 2
-                for j in range(N):
-                    if j in idx[:K]:
-                        s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
-                    else:
-                        s[j] = 0
-                for i in range(N):
-                    value[j] += s[j]  
-            for i in range(N):
-                value[i] /= M
-            return value
-
-        if self.model_family == "NN":
-            nn = self.model
-            X_feature = ACTIVATIONS['relu'](np.matmul(self.X, nn.coefs_[0]) + nn.intercepts_[0])
-            X_test_feature = ACTIVATIONS['relu'](np.matmul(self.X_test, nn.coefs_[0]) + nn.intercepts_[0])
-            value = np.zeros(N)
-            for i in range(M):
-                X = X_test_feature[i]
-                y = self.y_test[i]
-                s = np.zeros(N)
-                dist = []
-                diff = (X_feature - X).reshape(N, -1)
-                dist = np.einsum('ij, ij->i', diff, diff)
-                idx = np.argsort(dist)
-                ans = self.y[idx]
-                s[idx[N - 1]] = float(ans[N - 1] == y) / N
-                cur = N - 2
-                for j in range(N):
-                    if j in idx[:K]:
-                        s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
-                    else:
-                        s[j] = 0
-                for i in range(N):
-                    value[j] += s[j]  
-            for i in range(N):
-                value[i] /= M  
-            return value
-
-        value = np.zeros(N)
-        for i in range(M):
-            X = self.X_test[i]
-            y = self.y_test[i]
-
-            s = np.zeros(N)
-            dist = []
-            diff = (self.X - X).reshape(N, -1)
-            dist = np.einsum('ij, ij->i', diff, diff)
-            idx = np.argsort(dist)
-
-            ans = self.y[idx]
-
-            s[idx[N - 1]] = float(ans[N - 1] == y) / N
-
-            cur = N - 2
-            for j in range(N):
-                if j in idx[:K]:
-                    s[j] = float(int(ans[j] == y) - int(ans[K] == y)) / K
-                else:
-                    s[j] = 0
-                
-            for i in range(N):
-                value[j] += s[j]  
-
-        for i in range(N):
-            value[i] /= M
-        return value
 
     def one_iteration(self, tolerance, sources=None):
         """Runs one iteration of TMC-Shapley algorithm."""
