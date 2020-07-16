@@ -13,6 +13,8 @@ class KNN_Shapley(Measure):
         N = X_train.shape[0]
         M = X_test.shape[0]
 
+        self.model = model
+
         if model_family == "ResNet":
             resnet = model
             X_out1 = resnet.layer1(F.relu(resnet.bn1(resnet.conv1(torch.from_numpy(X_train)))))
