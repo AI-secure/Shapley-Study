@@ -21,10 +21,7 @@ class LOO(Measure):
             Leave-one-out scores
         """
         sources = {i:np.array([i]) for i in range(X_train.shape[0])}
-        try:
-            model = copy.deepcopy(model)
-        except:
-            model.fit(np.zeros((0,) + X_train.shape[1:]), y_train)
+        self.restart_model(X_train, y_train, model)
         model.fit(X_train, y_train)
         baseline_value = model.score(X_train, y_train)
         vals_loo = np.zeros(X_train.shape[0])

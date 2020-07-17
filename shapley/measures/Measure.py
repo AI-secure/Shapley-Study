@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import f1_score
+import copy
 
 class Measure(object):
 
@@ -9,11 +10,11 @@ class Measure(object):
     def __str__(self):
         return self.name
 
-    # def restart_model(self):
-    #     try:
-    #         self.model = copy.deepcopy(self.model)
-    #     except:
-    #         self.model.fit(np.zeros((0,) + self.X.shape[1:]), self.y)
+    def restart_model(self, X_train, y_train, model):
+        try:
+            model = copy.deepcopy(model)
+        except:
+            model.fit(np.zeros((0,) + X_train.shape[1:]), y_train)
 
     # def value(self):
     #     raise NotImplementedError
