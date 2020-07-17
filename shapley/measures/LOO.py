@@ -1,10 +1,12 @@
 from shapley.measures import Measure
+import numpy as np
+import copy
+import scipy
 
 class LOO(Measure):
 
-    def __init__(self, num_train=1000, num_test=100):
+    def __init__(self):
         self.name = 'LOO'
-
 
     def score(self, X_train, y_train, X_test, y_test, model_family='', model=None):
         """Calculated leave-one-out values for the given metric.
@@ -18,21 +20,21 @@ class LOO(Measure):
         Returns:
             Leave-one-out scores
         """
-        if sources is None:
-            sources = {i:np.array([i]) for i in range(X_train.shape[0])}
-        elif not isinstance(sources, dict):
-            sources = {i:np.where(sources==i)[0] for i in set(sources)}
-        self.restart_model()
-        self.model.fit(self.X, self.y)
-        baseline_value = self.model.score(X_train, y_train)
-        vals_loo = np.zeros(self.X.shape[0])
+        sources = {i:np.array([i]) for i in range(X_train.shape[0])}
+        try:
+            model = copy.deepcopy(model)
+        except:
+            model.fit(np.zeros((0,) + X_train.shape[1:]), y_train)
+        model.fit(X_train, y_train)
+        baseline_value = model.score(X_train, y_train)
+        vals_loo = np.zeros(X_train.shape[0])
         for i in sources.keys():
             if isinstance(X_train, scipy.sparse.csr_matrix):
-                X_batch = delete_rows_csr(self.X, sources[i])
+                X_batch = delete_rows_csr(X_train, sources[i])
             else:
                 X_batch = np.delete(X_train, sources[i], axis=0)
             y_batch = np.delete(y_train, sources[i], axis=0)
-            self.model.fit(X_batch, y_batch)
-            removed_value = self.model.score(X_train, y_train)
+            model.fit(X_batch, y_batch)
+            removed_value = model.score(X_train, y_train)
             vals_loo[sources[i]] = (baseline_value - removed_value)/len(sources[i])
         return vals_loo
