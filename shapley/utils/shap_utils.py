@@ -25,18 +25,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-        
+
 from shapley.models.resnet_fit import ResNet18
+
+from shapley.models.resnet import ResNet18_tiny
 from shapley.utils.Shapley import ShapNN, CShapNN
 
 def convergence_plots(marginals):
-    
+
     plt.rcParams['figure.figsize'] = 15,15
     for i, idx in enumerate(np.arange(min(25, marginals.shape[-1]))):
         plt.subplot(5,5,i+1)
-        plt.plot(np.cumsum(marginals[:, idx])/np.arange(1, len(marginals)+1))    
-        
-    
+        plt.plot(np.cumsum(marginals[:, idx])/np.arange(1, len(marginals)+1))
+
+
 def is_integer(array):
     return (np.equal(np.mod(array, 1), 0).mean()==1)
 
@@ -47,12 +49,12 @@ def is_fitted(model):
 
 
 def return_model(mode, **kwargs):
-    
+
     if mode=='logistic':
         solver = kwargs.get('solver', 'liblinear')
         n_jobs = kwargs.get('n_jobs', None)
         max_iter = kwargs.get('max_iter', 5000)
-        model = LogisticRegression(solver=solver, n_jobs=n_jobs, 
+        model = LogisticRegression(solver=solver, n_jobs=n_jobs,
                                  max_iter=max_iter, random_state=666,
                                  multi_class='auto')
     elif mode=='Tree':
@@ -85,6 +87,8 @@ def return_model(mode, **kwargs):
         model = Ridge(alpha=alpha, random_state=666)
     elif mode=='ResNet':
         model = ResNet18(num_classes=kwargs.get('num_classes', 10))
+    elif mode == "resnet18":
+        model = ResNet18_tiny()
     elif 'conv' in mode:
         tf.reset_default_graph()
         address = kwargs.get('address', 'weights/conv')
@@ -104,7 +108,7 @@ def return_model(mode, **kwargs):
         optimizer = kwargs.get('optimizer', 'sgd')
         if mode=='conv':
             model = CShapNN(mode='classification', batch_size=batch_size, max_epochs=max_iter,
-                          learning_rate=learning_rate, 
+                          learning_rate=learning_rate,
                           weight_decay=weight_decay, validation_fraction=validation_fraction,
                           early_stopping=early_stopping,
                          optimizer=optimizer, warm_start=warm_start, address=address,
@@ -113,7 +117,7 @@ def return_model(mode, **kwargs):
                          kernel_sizes=kernel_sizes, channels=channels, random_seed=666)
         elif mode=='conv_reg':
             model = CShapNN(mode='regression', batch_size=batch_size, max_epochs=max_iter,
-                          learning_rate=learning_rate, 
+                          learning_rate=learning_rate,
                           weight_decay=weight_decay, validation_fraction=validation_fraction,
                           early_stopping=early_stopping,
                          optimizer=optimizer, warm_start=warm_start, address=address,
@@ -155,11 +159,11 @@ def generate_features(latent, dependency):
         features.append(np.reshape(holder,[n,-1]))
         exp = np.expand_dims(exp,-1)
         holder = exp * np.expand_dims(holder,1)
-    return np.concatenate(features,axis=-1)  
+    return np.concatenate(features,axis=-1)
 
 
 def label_generator(problem, X, param, difficulty=1, beta=None, important=None):
-        
+
     if important is None or important > X.shape[-1]:
         important = X.shape[-1]
     dim_latent = sum([important**i for i in range(1, difficulty+1)])
@@ -193,7 +197,7 @@ def label_generator(problem, X, param, difficulty=1, beta=None, important=None):
 
 def one_iteration(clf, X, y, X_test, y_test, mean_score, tol=0.0, c=None, metric='accuracy'):
     """Runs one iteration of TMC-Shapley."""
-    
+
     if metric == 'auc':
         def score_func(clf, a, b):
             return roc_auc_score(b, clf.predict_proba(a)[:,1])
@@ -201,7 +205,7 @@ def one_iteration(clf, X, y, X_test, y_test, mean_score, tol=0.0, c=None, metric
         def score_func(clf, a, b):
             return clf.score(a, b)
     else:
-        raise ValueError("Wrong metric!")  
+        raise ValueError("Wrong metric!")
     if c is None:
         c = {i:np.array([i]) for i in range(len(X))}
     idxs, marginal_contribs = np.random.permutation(len(c.keys())), np.zeros(len(X))
@@ -235,7 +239,7 @@ def one_iteration(clf, X, y, X_test, y_test, mean_score, tol=0.0, c=None, metric
 
 
 def marginals(clf, X, y, X_test, y_test, c=None, tol=0., trials=3000, mean_score=None, metric='accuracy'):
-    
+
     if metric == 'auc':
         def score_func(clf, a, b):
             return roc_auc_score(b, clf.predict_proba(a)[:,1])
@@ -243,7 +247,7 @@ def marginals(clf, X, y, X_test, y_test, c=None, tol=0., trials=3000, mean_score
         def score_func(clf, a, b):
             return clf.score(a, b)
     else:
-        raise ValueError("Wrong metric!")  
+        raise ValueError("Wrong metric!")
     if mean_score is None:
         accs = []
         for _ in range(100):
@@ -260,7 +264,7 @@ def marginals(clf, X, y, X_test, y_test, c=None, tol=0., trials=3000, mean_score
     return np.array(marginals), np.array(idxs)
 
 def shapley(mode, X, y, X_test, y_test, stop=None, tol=0., trials=3000, **kwargs):
-    
+
     try:
         vals = np.zeros(len(X))
         example_idxs = np.random.choice(len(X), min(25, len(X)), replace=False)
@@ -276,14 +280,14 @@ def shapley(mode, X, y, X_test, y_test, stop=None, tol=0., trials=3000, **kwargs
         return vals, example_marginals
 
 def early_stopping(marginals, idxs, stopping):
-    
+
     stopped_marginals = np.zeros_like(marginals)
     for i in range(len(marginals)):
         stopped_marginals[i][idxs[i][:stopping]] = marginals[i][idxs[i][:stopping]]
     return np.mean(stopped_marginals, 0)
 
 def error(mem):
-        
+
     if len(mem) < 100:
         return 1.0
     all_vals = (np.cumsum(mem, 0)/np.reshape(np.arange(1, len(mem)+1), (-1,1)))[-100:]
@@ -291,28 +295,27 @@ def error(mem):
     return np.max(errors)
 
 def my_accuracy_score(clf, X, y):
-    
+
     probs = clf.predict_proba(X)
     predictions = np.argmax(probs, -1)
     return np.mean(np.equal(predictions, y))
 
 def my_f1_score(clf, X, y):
-    
+
     predictions = clf.predict(x)
     if len(set(y)) == 2:
         return f1_score(y, predictions)
     return f1_score(y, predictions, average='macro')
 
 def my_auc_score(clf, X, y):
-    
+
     probs = clf.predict_proba(X)
     true_probs = probs[np.arange(len(y)), y]
     return roc_auc_score(y, true_probs)
 
 def my_xe_score(clf, X, y):
-    
+
     probs = clf.predict_proba(X)
     true_probs = probs[np.arange(len(y)), y]
     true_log_probs = np.log(np.clip(true_probs, 1e-12, None))
     return np.mean(true_log_probs)
-    
