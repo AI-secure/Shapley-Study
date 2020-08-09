@@ -2,15 +2,15 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+import numpy as np
 from torch.autograd import Variable
-
+from .pytorch_fitmodule import FitModule
 
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
 
 
-class BasicBlock(nn.Module):
+class BasicBlock(FitModule):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1):
@@ -35,7 +35,7 @@ class BasicBlock(nn.Module):
         return out
 
 
-class Bottleneck(nn.Module):
+class Bottleneck(FitModule):
     expansion = 4
 
     def __init__(self, in_planes, planes, stride=1):
@@ -63,7 +63,7 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet(FitModule):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
@@ -84,6 +84,19 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
+    def score(self, X, y):
+        if isinstance(X, list):
+            X = np.array(X)
+        if isinstance(y, list):
+            y = np.array(y)
+        if isinstance(X, np.ndarray):
+            X = torch.from_numpy(X)
+        if isinstance(y, np.ndarray):
+            y = torch.from_numpy(y)
+        y_pred = self.predict(X)
+        return np.mean(y.numpy() == np.argmax(y_pred.numpy(), axis=1))
+
+
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
@@ -92,11 +105,12 @@ class ResNet(nn.Module):
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
         out_deep = out.view(out.size(0), -1)
-        out = self.linear(out_deep)
-        return out_deep, out
+        return out_deep
+        # out = self.linear(out_deep)
+        # return out_deep, out
 
 
-def ResNet18(num_classes=10):
+def ResNet18_tiny(num_classes=10):
     return ResNet(BasicBlock, [2,2,2,2], num_classes)
 
 def ResNet34(num_classes=10):

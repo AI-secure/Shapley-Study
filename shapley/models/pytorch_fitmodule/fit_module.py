@@ -38,7 +38,7 @@ class FitModule(Module):
             y,
             batch_size=32,
             epochs=10,
-            verbose=1,
+            verbose=0,
             validation_split=0.,
             validation_data=None,
             shuffle=True,
@@ -93,13 +93,13 @@ class FitModule(Module):
             X_val, y_val = None, None
         # Build DataLoaders
         if isinstance(X, numpy.ndarray):
-            X = torch.from_numpy(X).float() 
+            X = torch.from_numpy(X).float()
         if isinstance(y, numpy.ndarray):
-            y = torch.from_numpy(y).float() 
+            y = torch.from_numpy(y).float()
         if isinstance(X_val, numpy.ndarray):
-            X_val = torch.from_numpy(X_val).float() 
+            X_val = torch.from_numpy(X_val).float()
         if isinstance(y_val, numpy.ndarray):
-            y_val = torch.from_numpy(y_val).float() 
+            y_val = torch.from_numpy(y_val).float()
         train_data = get_loader(X, y, batch_size, shuffle)
         # Compile optimizer
         opt = optimizer(self.parameters())
@@ -115,10 +115,11 @@ class FitModule(Module):
             log = OrderedDict()
             epoch_loss = 0.0
             # Run batches
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             for batch_i, batch_data in enumerate(train_data):
                 # Get batch data
-                X_batch = Variable(batch_data[0], requires_grad=True).float() 
-                y_batch = Variable(batch_data[1], requires_grad=True).long()
+                X_batch = Variable(batch_data[0].to(device), requires_grad=True).float()
+                y_batch = Variable(batch_data[1].to(device), requires_grad=True).long()
                 # Backprop
                 opt.zero_grad()
                 y_batch_pred = self(X_batch).float()
