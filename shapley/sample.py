@@ -9,7 +9,7 @@ import copy
 import random
 
 from shapley.apps import Label
-from shapley.measures import KNN_Shapley, KNN_LOO
+from shapley.measures import KNN_Shapley, KNN_LOO, LOO, TMC_Shapley, G_Shapley
 
 parser = argparse.ArgumentParser(description = None)
 parser.add_argument('--num', type=int, required = True)
@@ -67,7 +67,7 @@ pickle.dump(flip, open('flip.pkl', 'wb'))
 
 # measure
 # measure = KNN_Shapley(K=5)
-measure = KNN_LOO(K=5)
+measure = G_Shapley()
 
 # application
 app = Label(X_data, y_data, X_test_data, y_test_data, model_family='NN')
