@@ -33,14 +33,14 @@ class FashionMnist(Loader):
         self.y_data = y_data[0 : self.num_train]
         self.y_data_orig = copy.deepcopy(y_data)
 
-        indice_flip = np.random.choice(self.num_train, self.num_test, replace=False)
-        self.y_data[indice_flip] = 1 - self.y_data[indice_flip]
-        self.X_flip = self.X_data[indice_flip]
-        self.y_flip = self.y_data[indice_flip]
+        # indice_flip = np.random.choice(self.num_train, self.num_test, replace=False)
+        # self.y_data[indice_flip] = 1 - self.y_data[indice_flip]
+        # self.X_flip = self.X_data[indice_flip]
+        # self.y_flip = self.y_data[indice_flip]
 
-        indice_benign = np.asarray(list(set(range(self.num_train)) - set(indice_flip)))
-        self.X_benign = self.X_data[indice_benign]
-        self.y_benign = self.y_data[indice_benign]
+        # indice_benign = np.asarray(list(set(range(self.num_train)) - set(indice_flip)))
+        # self.X_benign = self.X_data[indice_benign]
+        # self.y_benign = self.y_data[indice_benign]
 
     def prepare_data(self):
         return self.X_data, self.y_data, self.X_test_data, self.y_test_data

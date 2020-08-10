@@ -17,18 +17,16 @@ class Watermark(App):
 
     def run(self, measure):
 
-        with open('./CIFAR_data/watermarked_labels.txt','r') as f:
+        with open('./CIFAR_data/watermarked_labels.txt','r') as f: # watermark data needed
             for i, line in zip(range(100), f):
-                j = np.random.randint(x)
-                while watermarked[j] == 1:
-                    j = np.random.randint(x)
-                watermarked[j] = 1
+                j = np.random.randint(self.num_train)
+                while self.watermarked[j] == 1:
+                    j = np.random.randint(self.num_train)
+                self.watermarked[j] = 1
                 img = np.asarray(Image.open("./CIFAR_data/trigger_set/%d.jpg" % (i + 1)).convert('RGB').resize((32, 32))).transpose(2, 0, 1)
                 lbl = int(float(line.strip('\n')))
-                X_poison.append(img)
-                y_poison.append(lbl)
-                X_data[j] = img
-                y_data[j] = lbl
+                self.X[j] = img
+                self.y[j] = lbl
 
         dshap = DShap(X=self.X,
               y=self.y,

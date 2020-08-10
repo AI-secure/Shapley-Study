@@ -9,7 +9,7 @@ import copy
 import random
 
 from shapley.apps import Label, Poisoning, Watermark
-from shapley.loader import FashionMnist
+from shapley.loader import FashionMnist, Mnist
 from shapley.measures import KNN_Shapley, KNN_LOO, G_Shapley, LOO, TMC_Shapley
 
 parser = argparse.ArgumentParser(description = None)
@@ -29,7 +29,7 @@ measure = KNN_Shapley(K=5)
 # measure = LOO()
 
 # application
-app = Label(X_data, y_data, X_test_data, y_test_data, model_family='NN')
+app = Watermark(X_data, y_data, X_test_data, y_test_data, model_family='ResNet')
 
 # run and get result
 app.run(measure)

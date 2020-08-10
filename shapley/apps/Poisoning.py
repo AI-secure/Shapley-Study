@@ -16,18 +16,16 @@ class Poisoning(App):
         self.model_family = model_family
 
     def run(self, measure):
-
-        for i in range(x // 10):
-            j = np.random.randint(0, x)
-            while watermarked[j] == 1:
-                j = np.random.randint(0, x)
-            watermarked[j] = 1
-            original = y_data[j]
-            y_data[j] = (y_data[j] + 1) % 10
-            X_data[j][-1] = 1.0
-            X_data[j][-3] = 1.0
-            X_data[j][-30] = 1.0
-            X_data[j][-57] = 1.0
+        for i in range(self.num_train // 10):
+            j = np.random.randint(0, self.num_train)
+            while self.watermarked[j] == 1:
+                j = np.random.randint(0, self.num_train)
+            self.watermarked[j] = 1
+            self.y[j] = (self.y[j] + 1) % 10
+            self.X[j][-1] = 1.0
+            self.X[j][-3] = 1.0
+            self.X[j][-30] = 1.0
+            self.X[j][-57] = 1.0
 
         dshap = DShap(X=self.X,
               y=self.y,

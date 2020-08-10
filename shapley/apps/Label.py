@@ -16,10 +16,10 @@ class Label(App):
         self.model_family = model_family
 
     def run(self, measure):
-        for i in range(self.num_test // 10):
-            j = np.random.randint(0, self.num_test)
+        for i in range(self.num_train // 10):
+            j = np.random.randint(0, self.num_train)
             while self.flip[j] == 1:
-                j = np.random.randint(0, self.num_test)
+                j = np.random.randint(0, self.num_train)
             self.flip[j] = 1
             self.y[j] = 1 - self.y[j]
         dshap = DShap(X=self.X,
