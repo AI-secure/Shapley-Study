@@ -31,8 +31,8 @@ def delete_rows_csr(mat, index):
     return mat[mask]
 
 class DShap(object):
-    
-    def __init__(self, X, y, X_test, y_test, num_test, sources=None, directory="./", 
+
+    def __init__(self, X, y, X_test, y_test, num_test, sources=None, directory="./",
                  problem='classification', model_family='logistic', metric='accuracy', measure=None,
                  seed=None, nodump=False, **kwargs):
         """
@@ -49,11 +49,11 @@ class DShap(object):
             model_family: The model family used for learning algorithm
             metric: Evaluation metric
             seed: Random seed. When running parallel monte-carlo samples,
-                we initialize each with a different seed to prevent getting 
+                we initialize each with a different seed to prevent getting
                 same permutations.
             **kwargs: Arguments of the model
         """
-            
+
         if seed is not None:
             np.random.seed(seed)
             tf.set_random_seed(seed)
@@ -67,7 +67,7 @@ class DShap(object):
             self.hidden_units = []
         if self.directory is not None:
             if not os.path.exists(directory):
-                os.makedirs(directory)  
+                os.makedirs(directory)
                 os.makedirs(os.path.join(directory, 'weights'))
                 os.makedirs(os.path.join(directory, 'plots'))
             self._initialize_instance(X, y, X_test, y_test, num_test, sources)
@@ -82,7 +82,7 @@ class DShap(object):
 
     def _initialize_instance(self, X, y, X_test, y_test, num_test, sources=None):
         """Loads or creates data."""
-        
+
         if sources is None:
             sources = {i:np.array([i]) for i in range(X.shape[0])}
         elif not isinstance(sources, dict):
@@ -101,8 +101,8 @@ class DShap(object):
             # if self.nodump == False:
             #     pkl.dump({'X': self.X, 'y': self.y, 'X_test': self.X_test,
             #          'y_test': self.y_test, 'X_heldout': self.X_heldout,
-            #          'y_heldout':self.y_heldout, 'sources': self.sources}, 
-            #          open(data_dir, 'wb'))        
+            #          'y_heldout':self.y_heldout, 'sources': self.sources},
+            #          open(data_dir, 'wb'))
         loo_dir = os.path.join(self.directory, 'loo.pkl')
         self.vals_loo = None
         if os.path.exists(loo_dir):
@@ -128,7 +128,7 @@ class DShap(object):
             return
         if self.nodump == False:
             pkl.dump(self.vals_g, open(g_dir, 'wb'))
-                
+
     def init_score(self, metric):
         """ Gives the value of an initial untrained model."""
         if metric == 'accuracy':
@@ -143,7 +143,7 @@ class DShap(object):
             self.model.fit(self.X, np.random.permutation(self.y))
             random_scores.append(self.value(self.model, metric))
         return np.mean(random_scores)
-        
+
     def value(self, model, metric=None, X=None, y=None):
         """Computes the values of the given model.
         Args:
@@ -173,7 +173,7 @@ class DShap(object):
 
     def run(self, save_every, err, tolerance=0.01, knn_run=True, tmc_run=True, g_run=True, loo_run=True):
         """Calculates data sources(points) values.
-        
+
         Args:
             save_every: save marginal contrivbutions every n iterations.
             err: stopping criteria for each of TMC-Shapley or G-Shapley algorithm.
@@ -185,6 +185,9 @@ class DShap(object):
 
         self.restart_model()
         self.model.fit(self.X, self.y)
+
+        print(type(self.X))
+        print(self.model)
 
         return self.measure.score(self.X, self.y, self.X_test, self.y_test, self.model_family, self.model)
 
@@ -241,7 +244,7 @@ class DShap(object):
                 if self.is_regression or len(set(y_batch)) == len(set(self.y_test)): ##FIXIT
                     self.restart_model()
                     self.model.fit(X_batch, y_batch)
-                    new_score = self.value(self.model, metric=self.metric)       
+                    new_score = self.value(self.model, metric=self.metric)
             marginal_contribs[sources[idx]] = (new_score - old_score) / len(sources[idx])
             if np.abs(new_score - self.mean_score) <= tolerance * self.mean_score:
                 truncation_counter += 1
@@ -250,14 +253,14 @@ class DShap(object):
             else:
                 truncation_counter = 0
         return marginal_contribs, idxs
-    
+
     def restart_model(self):
-        
+
         try:
             self.model = copy.deepcopy(self.model)
         except:
             self.model.fit(np.zeros((0,) + self.X.shape[1:]), self.y)
-        
+
     def _one_step_lr(self):
         """Computes the best learning rate for G-Shapley algorithm."""
         if self.directory is None:
@@ -267,8 +270,8 @@ class DShap(object):
         best_acc = 0.0
         for i in np.arange(1, 5, 0.5):
             model = ShapNN(
-                self.problem, batch_size=1, max_epochs=1, 
-                learning_rate=10**(-i), weight_decay=0., 
+                self.problem, batch_size=1, max_epochs=1,
+                learning_rate=10**(-i), weight_decay=0.,
                 validation_fraction=0, optimizer='sgd', warm_start=False,
                 address=address, hidden_units=self.hidden_units)
             accs = []
@@ -280,10 +283,10 @@ class DShap(object):
                 best_acc  = np.mean(accs) - np.std(accs)
                 learning_rate = 10**(-i)
         return learning_rate
-    
+
     def _g_shap(self, iterations, err=None, learning_rate=None, sources=None):
         """Method for running G-Shapley algorithm.
-        
+
         Args:
             iterations: Number of iterations of the algorithm.
             err: Stopping error criteria
@@ -328,16 +331,16 @@ class DShap(object):
                 [self.mem_g, np.reshape(individual_contribs, (1,-1))])
             self.idxs_g = np.concatenate(
                 [self.idxs_g, np.reshape(model.history['idxs'][0], (1,-1))])
-    
+
     def _calculate_loo_vals(self, sources=None, metric=None):
         """Calculated leave-one-out values for the given metric.
-        
+
         Args:
             metric: If None, it will use the objects default metric.
             sources: If values are for sources of data points rather than
                    individual points. In the format of an assignment array
                    or dict.
-        
+
         Returns:
             Leave-one-out scores
         """
@@ -347,7 +350,7 @@ class DShap(object):
             sources = {i:np.where(sources==i)[0] for i in set(sources)}
         print('Starting LOO score calculations!')
         if metric is None:
-            metric = self.metric 
+            metric = self.metric
         self.restart_model()
         self.model.fit(self.X, self.y)
         baseline_value = self.value(self.model, metric=metric)

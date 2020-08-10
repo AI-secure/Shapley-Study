@@ -10,16 +10,17 @@ class LOO(Measure):
 
     def score(self, X_train, y_train, X_test, y_test, model_family='', model=None):
         """Calculated leave-one-out values for the given metric.
-        
+
         Args:
             metric: If None, it will use the objects default metric.
             sources: If values are for sources of data points rather than
                    individual points. In the format of an assignment array
                    or dict.
-        
+
         Returns:
             Leave-one-out scores
         """
+
         sources = {i:np.array([i]) for i in range(X_train.shape[0])}
         self.restart_model(X_train, y_train, model)
         model.fit(X_train, y_train)

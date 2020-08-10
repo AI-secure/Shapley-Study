@@ -191,7 +191,7 @@ class ResNet(FitModule):
                 p.requires_grad = True
 
     def forward(self, x):
-        x = x.float() 
+        x = x.float()
         out = F.relu(self.bn1(self.conv1(x).float()).float())
         out = self.layer1(out)
         out = self.layer2(out)
