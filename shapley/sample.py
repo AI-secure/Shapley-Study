@@ -9,7 +9,7 @@ import copy
 import random
 
 from shapley.apps import Label, Poisoning, Watermark, Summarization, Acquisition
-from shapley.loader import FashionMnist, TinyImageNet, MNIST, CIFAR
+from shapley.loader import FashionMnist, TinyImageNet, MNIST, CIFAR, PubFig
 from shapley.measures import KNN_Shapley, KNN_LOO, G_Shapley, LOO, TMC_Shapley
 
 parser = argparse.ArgumentParser(description = None)
@@ -38,7 +38,7 @@ args = parser.parse_args()
 # app.run(measure, X_data, y_data, X_val, y_val)
 # app.run(measure)
 
-loader = CIFAR(num_train=args.num)
+loader = PubFig(num_train=args.num)
 X_data, y_data, X_test_data, y_test_data = loader.prepare_data()
 print("loader finished")
 measure = KNN_Shapley()

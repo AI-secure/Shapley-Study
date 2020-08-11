@@ -4,3 +4,4 @@ from .tiny_imagenet import TinyImageNet
 from .mnist import MNIST
 from .usps import USPS
 from .cifar import CIFAR
+from .pubfig import PubFig
