@@ -9,7 +9,7 @@ class PubFig(Loader):
     def __init__(self, num_train):
         self.name = 'pubfig'
         self.num_train = num_train
-        self.num_test = num_train
+        self.num_test = num_train // 10
 
         pubfig = PUBFIG83(root='./pubfig_data/pubfig83-aligned')
         imgs = pubfig.imgs

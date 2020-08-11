@@ -9,7 +9,7 @@ class CIFAR(Loader):
     def __init__(self, num_train):
         self.name = 'cifar'
         self.num_train = num_train
-        self.num_test = num_train
+        self.num_test = num_train // 10
 
         xs = []
         ys = []
