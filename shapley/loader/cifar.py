@@ -1,5 +1,6 @@
 import copy
 import numpy as np
+import pickle
 from sklearn.utils import shuffle
 from tensorflow import keras
 
@@ -14,13 +15,13 @@ class CIFAR(Loader):
         xs = []
         ys = []
         for b in range(1, 6):
-            f = './CIFAR_data/data_batch_%d' % b
+            f = 'Shapley_data/CIFAR_data/data_batch_%d' % b
             X, y = self.load_CIFAR_batch(f)
             xs.append(X)
             ys.append(y)
         X_data = np.concatenate(xs)
         y_data = np.concatenate(ys)
-        X_test_data, y_test_data = self.load_CIFAR_batch('./CIFAR_data/test_batch')
+        X_test_data, y_test_data = self.load_CIFAR_batch('Shapley_data/CIFAR_data/test_batch')
         X_data = X_data[0:num_train]
         y_data = y_data[0:num_train]
         y_data_orig = copy.deepcopy(y_data)

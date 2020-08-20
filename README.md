@@ -1,6 +1,4 @@
-## KNN-Shapley
-
-Thie repo is an implementation of "Scalability vs. Utility: Must We Sacriﬁce One for the Other in Shapley-enriched Data Workﬂows?"
+## Shapley-Study
 
 ### Setup
 
@@ -21,6 +19,8 @@ Applications    Noisy label detection, Watermark removal, Data summarization, Ac
 Measures        KNN-Shapley, TMC-Shapley, G-Shapley, LOO, KNN-LOO, Random
 ```
 
+The customized datasets including injected watermarks as well as other preprocessed datasets used in the code can be found on [Google Drive](https://drive.google.com/drive/folders/1vJ4PDyLq9Ud1d5NBeQjZiJHEeWqRXhrk?usp=sharing). You are recommended to download the folder ``Shapley_data`` and put it under the root folder (the same as samples.ipynb) for the purpose of testing.
+
 ### Usage
 
 **Step 1.** Apply a certain extractor to a certain dataset to extract the embeddings, implemented in the form of ``extract_embeddings(extractor, dataset)``, e.g.
@@ -37,8 +37,4 @@ app = ...
 app.run(measure)
 ```
 
-See shaley.sample for example and run the toy experiment using the command below:
-
-``
-python -m shapley.sample --num 1000
-``
+See ``samples.ipynb`` for the sample testcases.

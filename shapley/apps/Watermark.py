@@ -1,6 +1,8 @@
+import numpy as np
+from PIL import Image
+
 from shapley.apps import App
 from shapley.utils import DShap
-import numpy as np
 
 class Watermark(App):
 

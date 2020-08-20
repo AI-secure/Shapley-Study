@@ -1,7 +1,9 @@
 import copy
 import numpy as np
+import pickle
 from sklearn.utils import shuffle
 from tensorflow import keras
+
 from shapley.loader import Loader
 from shapley.utils.pubfig_data import PUBFIG83
 
@@ -11,7 +13,7 @@ class PubFig(Loader):
         self.num_train = num_train
         self.num_test = num_train // 10
 
-        pubfig = PUBFIG83(root='./pubfig_data/pubfig83-aligned')
+        pubfig = PUBFIG83(root='Shapley_data/pubfig_data/pubfig83-aligned')
         imgs = pubfig.imgs
         X_data = []
         y_data = []

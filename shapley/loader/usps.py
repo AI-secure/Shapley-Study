@@ -11,7 +11,7 @@ import cv2
 class USPS(Loader):
     def __init__(self, num_train, expand=False):
         self.name = 'usps'
-        self.data_path = './data/'
+        self.data_path = './Shapley_data/'
         self.num_train = num_train
         self.num_test = num_train
         data_url = "https://www.kaggle.com/bistaumanga/usps-dataset?select=usps.h5"

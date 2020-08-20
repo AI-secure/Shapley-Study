@@ -15,7 +15,7 @@ class Flower(Loader):
         self.num_train = num_train
         self.num_test = num_train // 10
 
-        data = pickle.load(open("flower_data/flowerdata.pkl", "rb"))
+        data = pickle.load(open("Shapley_data/flower_data/flowerdata.pkl", "rb"))
 
         X_data = data["X"]
         y_data = data["y"]
