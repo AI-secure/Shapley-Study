@@ -15,7 +15,7 @@ class Spam(Loader):
         self.num_train = num_train
         self.num_test = num_train // 10
 
-        data = pickle.load(open("SPAM_data/spamdata.pkl", "rb"))
+        data = pickle.load(open("Shapley_data/SPAM_data/spamdata.pkl", "rb"))
 
         X_data = data["X"]
         y_data = data["y"].as_matrix()

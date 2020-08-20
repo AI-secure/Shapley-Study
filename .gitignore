@@ -3,5 +3,7 @@ __pycache__/
 build/
 data/
 dist/
-
-
+Shapley_data/
+Shapley_data
+shapley.egg-info/
+.ipynb_checkpoints/
