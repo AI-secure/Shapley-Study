@@ -12,17 +12,20 @@ class Label(App):
         self.y_test = np.squeeze(y_test)
         self.num_train = len(X)
         self.num_test = len(X_test)
-        self.flip = np.zeros(self.num_train)
+        self.flip = None
         self.model_family = model_family
 
     def run(self, measure):
         num_classes = np.max(self.y) + 1
-        for i in range(self.num_train // 10):
-            j = np.random.randint(0, self.num_train)
-            while self.flip[j] == 1:
+        if self.flip is None:
+            self.flip = np.zeros(self.num_train)
+            for i in range(self.num_train // 10):
                 j = np.random.randint(0, self.num_train)
-            self.flip[j] = 1
-            self.y[j] = (self.y[j] + 1) % num_classes
+                while self.flip[j] == 1:
+                    j = np.random.randint(0, self.num_train)
+                self.flip[j] = 1
+                self.y[j] = (self.y[j] + 1) % num_classes
+        print(self.y)
         dshap = DShap(X=self.X,
               y=self.y,
               X_test=self.X_test,
@@ -30,7 +33,8 @@ class Label(App):
               num_test=self.num_test,
               model_family=self.model_family,
               measure=measure)
-        self.result = dshap.run(save_every=10, err = 0.5)
+        result = dshap.run(save_every=10, err = 0.5)
         print('done!')
         print('result shown below:')
-        print(self.result)
+        print(result)
+        return result
