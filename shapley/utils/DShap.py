@@ -71,7 +71,7 @@ class DShap(object):
                 os.makedirs(os.path.join(directory, 'weights'))
                 os.makedirs(os.path.join(directory, 'plots'))
             self._initialize_instance(X, y, X_test, y_test, num_test, sources)
-        if len(set(self.y)) > 2:
+        if np.max(self.y) + 1 > 2:
             assert self.metric != 'f1' and self.metric != 'auc', 'Invalid metric!'
         is_regression = (np.mean(self.y//1==self.y) != 1)
         is_regression = is_regression or isinstance(self.y[0], np.float32)
@@ -185,10 +185,7 @@ class DShap(object):
 
         self.restart_model()
         self.model.fit(self.X, self.y)
-
-        print(type(self.X))
-        print(self.model)
-
+        
         return self.measure.score(self.X, self.y, self.X_test, self.y_test, self.model_family, self.model)
 
         # if self.measure == "LOO":

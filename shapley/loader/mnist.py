@@ -9,7 +9,7 @@ class MNIST(Loader):
     def __init__(self, num_train, one_hot=True, shuffle=False, by_label=False):
         self.name = 'mnist'
         self.num_train = num_train
-        self.num_test = num_train
+        self.num_test = num_train // 10
         self.x_train, self.y_train, self.x_test, self.y_test = self.load_data(one_hot, by_label)
         if shuffle: self.shuffle_data()
 
