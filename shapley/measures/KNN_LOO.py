@@ -103,3 +103,4 @@ class KNN_LOO(Measure):
 
         for i in range(N):
             value[i] /= M
+        return value

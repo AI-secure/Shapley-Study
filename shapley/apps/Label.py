@@ -25,7 +25,6 @@ class Label(App):
                     j = np.random.randint(0, self.num_train)
                 self.flip[j] = 1
                 self.y[j] = (self.y[j] + 1) % num_classes
-        print(self.y)
         dshap = DShap(X=self.X,
               y=self.y,
               X_test=self.X_test,

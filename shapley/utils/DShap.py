@@ -34,7 +34,7 @@ class DShap(object):
 
     def __init__(self, X, y, X_test, y_test, num_test, sources=None, directory="./",
                  problem='classification', model_family='logistic', metric='accuracy', measure=None,
-                 seed=None, nodump=False, **kwargs):
+                 seed=None, nodump=True, **kwargs):
         """
         Args:
             X: Data covariates
