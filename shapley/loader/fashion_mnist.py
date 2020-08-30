@@ -9,38 +9,48 @@ class FashionMnist(Loader):
 
     def __init__(self, num_train):
         self.name = 'fashion_mnist'
-
-        (train_images, train_labels), (_, _) = keras.datasets.fashion_mnist.load_data()
-
-        X_data = []
-        y_data = []
-
-        indice_0 = np.where(train_labels==0)[0]
-        indice_1 = np.where(train_labels==6)[0]
-        indice_all = np.hstack((indice_0, indice_1))
-
-        X_data = train_images[indice_all].reshape(len(indice_all), -1)
-        y_data = np.hstack((np.zeros(len(indice_0), dtype=np.int64), np.ones(len(indice_1), dtype=np.int64)))
-
-        X_data, y_data = shuffle(X_data, y_data)
-
         self.num_train = num_train
         self.num_test = num_train // 10
+        self.x_train, self.y_train, self.x_test, self.y_test = self.load_data()
+        self.shuffle_data()
+        self.x_train = self.x_train[:self.num_train]
+        self.y_train = self.y_train[:self.num_train]
+        self.x_test = self.x_test[:self.num_test]
+        self.y_test = self.y_test[:self.num_test]
 
-        self.X_test_data = X_data[self.num_train : self.num_train + self.num_test]
-        self.y_test_data = y_data[self.num_train : self.num_train + self.num_test]
-        self.X_data = X_data[0 : self.num_train]
-        self.y_data = y_data[0 : self.num_train]
-        self.y_data_orig = copy.deepcopy(y_data)
+    def load_data(self):
+        fashion_mnist = keras.datasets.fashion_mnist
+        (x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 
-        # indice_flip = np.random.choice(self.num_train, self.num_test, replace=False)
-        # self.y_data[indice_flip] = 1 - self.y_data[indice_flip]
-        # self.X_flip = self.X_data[indice_flip]
-        # self.y_flip = self.y_data[indice_flip]
+        indice_0 = np.where(y_train==0)[0]
+        indice_1 = np.where(y_train==6)[0]
+        indice_all = np.hstack((indice_0, indice_1))
+        x_train = x_train[indice_all]
+        y_train = np.hstack((np.zeros(len(indice_0), dtype=np.int64), np.ones(len(indice_1), dtype=np.int64)))
+        indice_0 = np.where(y_test==0)[0]
+        indice_1 = np.where(y_test==6)[0]
+        indice_all = np.hstack((indice_0, indice_1))
+        x_test = x_test[indice_all]
+        y_test = np.hstack((np.zeros(len(indice_0), dtype=np.int64), np.ones(len(indice_1), dtype=np.int64)))
 
-        # indice_benign = np.asarray(list(set(range(self.num_train)) - set(indice_flip)))
-        # self.X_benign = self.X_data[indice_benign]
-        # self.y_benign = self.y_data[indice_benign]
+        x_train = np.reshape(x_train, [-1, 28 * 28])
+        x_train = x_train.astype(np.float32) / 255
+        x_test = np.reshape(x_test, [-1, 28 * 28])
+        x_test = x_test.astype(np.float32) / 255
+
+        ind_train = np.argsort(y_train)
+        ind_test = np.argsort(y_test)
+        x_train, y_train = x_train[ind_train], y_train[ind_train]
+        x_test, y_test = x_test[ind_test], y_test[ind_test]
+
+        return x_train, y_train, x_test, y_test
+
+
+    def shuffle_data(self):
+        ind = np.random.permutation(len(self.x_train))
+        self.x_train, self.y_train = self.x_train[ind], self.y_train[ind]
+        ind = np.random.permutation(len(self.x_test))
+        self.x_test, self.y_test = self.x_test[ind], self.y_test[ind]
 
     def prepare_data(self):
-        return self.X_data, self.y_data, self.X_test_data, self.y_test_data
+        return self.x_train, self.y_train, self.x_test, self.y_test

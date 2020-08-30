@@ -6,12 +6,16 @@ from tensorflow import keras
 from shapley.loader import Loader
 
 class MNIST(Loader):
-    def __init__(self, num_train, one_hot=True, shuffle=False, by_label=False):
+    def __init__(self, num_train, one_hot=True, shuffle=True, by_label=False):
         self.name = 'mnist'
         self.num_train = num_train
         self.num_test = num_train // 10
         self.x_train, self.y_train, self.x_test, self.y_test = self.load_data(one_hot, by_label)
         if shuffle: self.shuffle_data()
+        self.x_train = self.x_train[:self.num_train]
+        self.y_train = self.y_train[:self.num_train]
+        self.x_test = self.x_test[:self.num_test]
+        self.y_test = self.y_test[:self.num_test]
 
     def load_data(self, one_hot, by_label):
         mnist = keras.datasets.mnist
@@ -27,18 +31,19 @@ class MNIST(Loader):
             x_train, y_train = x_train[ind_train], y_train[ind_train]
             x_test, y_test = x_test[ind_test], y_test[ind_test]
 
-
         if one_hot:
             # convert to one-hot labels
             y_train = keras.utils.to_categorical(y_train)
             y_test = keras.utils.to_categorical(y_test)
 
-        return x_train[:self.num_train], y_train[:self.num_train], x_test[:self.num_test], y_test[:self.num_test]
+        return x_train, y_train, x_test, y_test
 
 
     def shuffle_data(self):
-        ind = np.random.permutation(self.num_train)
+        ind = np.random.permutation(len(self.x_train))
         self.x_train, self.y_train = self.x_train[ind], self.y_train[ind]
+        ind = np.random.permutation(len(self.x_test))
+        self.x_test, self.y_test = self.x_test[ind], self.y_test[ind]
 
     def prepare_data(self):
         return self.x_train, self.y_train, self.x_test, self.y_test
