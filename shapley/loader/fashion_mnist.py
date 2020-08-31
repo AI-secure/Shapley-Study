@@ -38,11 +38,6 @@ class FashionMnist(Loader):
         x_test = np.reshape(x_test, [-1, 28 * 28])
         x_test = x_test.astype(np.float32) / 255
 
-        ind_train = np.argsort(y_train)
-        ind_test = np.argsort(y_test)
-        x_train, y_train = x_train[ind_train], y_train[ind_train]
-        x_test, y_test = x_test[ind_test], y_test[ind_test]
-
         return x_train, y_train, x_test, y_test
 
 

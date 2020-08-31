@@ -55,8 +55,7 @@ def return_model(mode, **kwargs):
         n_jobs = kwargs.get('n_jobs', None)
         max_iter = kwargs.get('max_iter', 5000)
         model = LogisticRegression(solver=solver, n_jobs=n_jobs,
-                                 max_iter=max_iter, random_state=666,
-                                 multi_class='auto')
+                                 max_iter=max_iter, random_state=666)
     elif mode=='Tree':
         model = DecisionTreeClassifier(random_state=666)
     elif mode=='RandomForest':

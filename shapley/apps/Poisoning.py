@@ -11,23 +11,21 @@ class Poisoning(App):
         self.X_test = X_test
         self.y_test = y_test
         self.num_train = len(X)
+        self.num_poison = self.num_train // 10
         self.num_test = len(X_test)
         self.watermarked = None
         self.model_family = model_family
 
     def run(self, measure):
+        num_classes = np.max(self.y) + 1
         if self.watermarked is None:
+            poison_indice = np.random.choice(self.num_train, self.num_poison, replace=False)
+            self.y[poison_indice] = (self.y[poison_indice] + 1) % num_classes
+            self.X[poison_indice][-1] = self.X[poison_indice][-3] = \
+                self.X[poison_indice][-30] = self.X[poison_indice][-57] = 1.0
+
             self.watermarked = np.zeros(self.num_train)
-            for i in range(self.num_train // 10):
-                j = np.random.randint(0, self.num_train)
-                while self.watermarked[j] == 1:
-                    j = np.random.randint(0, self.num_train)
-                self.watermarked[j] = 1
-                self.y[j] = (self.y[j] + 1) % 10
-                self.X[j][-1] = 1.0
-                self.X[j][-3] = 1.0
-                self.X[j][-30] = 1.0
-                self.X[j][-57] = 1.0
+            self.watermarked[poison_indice] = 1
 
         dshap = DShap(X=self.X,
               y=self.y,
