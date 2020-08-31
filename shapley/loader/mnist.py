@@ -20,9 +20,9 @@ class MNIST(Loader):
     def load_data(self, one_hot, by_label):
         mnist = keras.datasets.mnist
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
-        x_train = np.reshape(x_train, [-1, 28, 28, 1])
+        x_train = np.reshape(x_train, [-1, 28 * 28])
         x_train = x_train.astype(np.float32) / 255
-        x_test = np.reshape(x_test, [-1, 28, 28, 1])
+        x_test = np.reshape(x_test, [-1, 28 * 28])
         x_test = x_test.astype(np.float32) / 255
 
         if by_label:
