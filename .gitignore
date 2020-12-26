@@ -1,5 +1,6 @@
 __pycache__/
 *.pkl
+.python-version
 build/
 data/
 dist/
